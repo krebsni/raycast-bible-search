@@ -20,7 +20,7 @@ import { searchVersesFromDB } from "./db";
 import { cleanseQuery, createClipboardText, createMarkdown, createReferenceList, parseQuery } from "./util";
 
 const BASE_PATH = resolve(homedir(), "Documents/dev-tools/search-bible");
-const DB_FOLDER = path.join(BASE_PATH, "assets/RcV'03.SQLite3");
+const DB_FOLDER = path.join(BASE_PATH, "assets/Bible.SQLite3");
 const db = new Database(DB_FOLDER, {
   nativeBinding: path.join(BASE_PATH, "node_modules/better-sqlite3/build/Release/better_sqlite3.node"),
 });

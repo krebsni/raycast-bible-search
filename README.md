@@ -4,8 +4,7 @@ Find verses and footnotes in the recovery verison
 
 # Troubleshooting
 
-Sqlite3 is required to run this project. Requires arm install via
-
+If better-sqlite3 does not work it may need to be locally rebuilt by running 
 ```
-npm install better-sqlite3 --build-from-source --target_arch=arm64 --fallback-to-build
+npm rebuild
 ```

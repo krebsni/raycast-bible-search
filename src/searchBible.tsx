@@ -30,6 +30,7 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
   const prefs = getPreferenceValues<Preferences>();
   const { search = "", otnt = "OT+NT" } = props.arguments;
   const [currentQuery, setQuery] = useState({ search: search, otnt: otnt.trim().toUpperCase() });
+  const [filter, setFilter] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchResult, setSearchResult] = useState<Verse[] | undefined>(undefined);
   // const [permissionView, setPermissionView] = useState<JSX.Element | undefined>(undefined);
@@ -38,10 +39,8 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
     async function setSelectedTextAsQuery() {
       try {
         const query = await getSelectedText();
-        console.log("query", query);
         if (query) {
           const { ref, mode } = cleanseQuery(query);
-          console.log("cleansedQuery", ref + " " + mode);
           setQuery((old) => ({ ...old, search: ref, otnt: mode || old.otnt }));
         }
       } catch (error) {
@@ -61,9 +60,9 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
     setIsLoading(true);
     try {
       const queryAndMode = { query: parseQuery(currentQuery.search), otnt: currentQuery.otnt };
-      console.log("queryAndMode", queryAndMode);
       const verses: Verse[] = await searchVersesFromDB(queryAndMode, db);
       setSearchResult(verses);
+      setFilter(queryAndMode.query?.filter || "");
     } catch (error) {
       if (error instanceof Error) {
         showToast({ title: "Error", message: error.message, style: Toast.Style.Failure });
@@ -72,7 +71,7 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
     } finally {
       setIsLoading(false);
     }
-  }, [currentQuery.otnt, currentQuery.search]);
+  }, [currentQuery.otnt, currentQuery.search, filter]);
 
   useEffect(() => {
     // Don't search when query changes if the user only wants to search when they press enter.
@@ -83,8 +82,11 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
 
   const detailContent = useMemo(() => {
     if (!(searchResult && searchResult.length > 0)) return null;
-    return { markdown: createMarkdown(prefs, searchResult), clipboardText: createClipboardText(prefs, searchResult) };
-  }, [prefs, searchResult]);
+    return {
+      markdown: createMarkdown(prefs, searchResult, filter),
+      clipboardText: createClipboardText(prefs, searchResult),
+    };
+  }, [prefs, searchResult, filter]);
 
   function getEmptyViewText() {
     if (isLoading) {
@@ -97,6 +99,8 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
       return "No Results";
     }
   }
+
+  // TODO: group verses by reference ";" and show the group reference as the title
 
   const searchAction = <Action title="Search" icon={Icon.Binoculars} onAction={performSearch} />;
   return (
@@ -120,25 +124,41 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
       onSearchTextChange={(newQuery) => setQuery((old) => ({ ...old, search: newQuery }))}
     >
       {searchResult && searchResult.length > 0 && detailContent ? (
-        <List.Item
-          title={createReferenceList(searchResult)}
-          detail={<List.Item.Detail markdown={detailContent.markdown} />}
-          actions={
-            <ActionPanel>
-              {prefs.enterToSearch && searchAction}
-              <Action.CopyToClipboard content={detailContent.clipboardText} />
-              <Action.Paste
-                content={detailContent.clipboardText}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-              />
-              <Action.OpenInBrowser
-                title="Open at BibleGateway.com"
-                url={""}
-                shortcut={{ modifiers: ["cmd"], key: "o" }}
-              />
-            </ActionPanel>
-          }
-        />
+        detailContent.markdown.map((item) => (
+          <List.Item
+            title={item.title}
+            detail={<List.Item.Detail markdown={item.detail} />}
+            actions={
+              <ActionPanel>
+                {prefs.enterToSearch && searchAction}
+                <Action.CopyToClipboard content={item.detail} />
+                <Action.CopyToClipboard
+                  title="Copy All to Clipboard"
+                  content={detailContent.clipboardText}
+                  shortcut={{
+                    modifiers: ["shift"],
+                    key: "enter",
+                  }}
+                />
+                <Action.Paste
+                  title="Paste All"
+                  content={detailContent.clipboardText}
+                  shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+                />
+                <Action.Paste
+                  title="Paste"
+                  content={item.detail}
+                  shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
+                />
+                <Action.OpenInBrowser
+                  title="Open at BibleGateway.com"
+                  url={""}
+                  shortcut={{ modifiers: ["cmd"], key: "o" }}
+                />
+              </ActionPanel>
+            }
+          />
+        ))
       ) : (
         <List.EmptyView
           title={getEmptyViewText()}

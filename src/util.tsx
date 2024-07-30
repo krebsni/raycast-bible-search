@@ -1,11 +1,40 @@
 import { NT_BOOKS, Ref } from "./types";
 import { Verse, MODE, Query, OT_BOOKS, BOOKS_ABBREV, ABBREV_MAP } from "./types";
 
-export function createMarkdown(prefs: Preferences, verses: Verse[] | undefined) {
+interface listItem {
+  title: string;
+  detail: string;
+}
+
+export function createMarkdown(
+  prefs: Preferences,
+  verses: Verse[] | undefined,
+  filter: string | undefined,
+): listItem[] {
   if (!verses) {
-    return "";
+    return [];
   }
-  return verses.map((v) => `${v.book_name}. ${v.chapter}:${v.verse} ${v.text}`).join("\n");
+  return verses.map((v) => {
+    let filterText = "";
+    if (filter) {
+      const words = v.text.split(" ");
+      const filterIndex = words.findIndex((word) => word.toLowerCase().includes(filter.toLowerCase()));
+      let startIndex = Math.max(0, filterIndex - 2);
+      let endIndex = Math.min(words.length - 1, filterIndex + 2);
+      if (startIndex === 0) {
+        endIndex = Math.min(endIndex + (2 - filterIndex), words.length - 1);
+      } else if (endIndex === words.length - 1) {
+        startIndex = Math.max(startIndex - (2 - (words.length - 1 - filterIndex)), 0);
+      }
+      filterText = `${startIndex > 0 ? "..." : ""}${words.slice(startIndex, endIndex + 1).join(" ")}${endIndex < words.length - 1 ? "..." : ""}`;
+    } else {
+      filterText = v.text;
+    }
+
+    const title = `${v.book_name}. ${v.chapter}:${v.verse} ${filterText}`;
+    const detail = `${v.book_name}. ${v.chapter}:${v.verse} ${v.text}`;
+    return { title, detail };
+  });
 }
 
 export function createClipboardText(refs: Preferences, verses: Verse[] | undefined) {
@@ -52,7 +81,14 @@ export function parseQuery(query: string): Query | undefined {
 
   const refs: Ref[] = [];
   let previousRef: Ref | undefined = undefined;
+  // remove everything before " - "
+  const queryParts = query.split(" - ");
+  if (queryParts.length > 1) {
+    query = queryParts[queryParts.length - 1];
+    console.log("Removed first part of query before last ' - ': ", query);
+  }
   const parts = query.split(/[;,]/);
+  console.log("parts", parts);
 
   const isVerseSeparation: boolean[] = [];
   isVerseSeparation.push(false);
@@ -87,7 +123,7 @@ export function parseQuery(query: string): Query | undefined {
 
 function containsBibleBook(ref: string): boolean {
   const allBooks = [...OT_BOOKS, ...NT_BOOKS, ...BOOKS_ABBREV, ...ABBREV_MAP.keys()];
-  return allBooks.some((book) => ref.includes(book));
+  return allBooks.some((book) => book.toLowerCase() === ref.toLowerCase());
 }
 
 /**
@@ -110,7 +146,11 @@ export function parseRef(ref: string, previousRef: Ref | undefined, isVerseSepar
   const regex = /^(\d?\s*\.?\s?\w+)?\.?\s*(\d+)?(?::(\d+))?(?:-(\d+)(?::(\d+))?)?$/;
   //              1 book                  2 cFr/vFr  3 vFrom   4 cTo/vTo  5 vTo
 
-  console.log("isVerseSeparation", isVerseSeparation);
+  ref = ref
+    .trim()
+    .replace(/[.,?!":]$/, "")
+    .replace(/["'`*']/g, "");
+  console.log("ref", ref);
   const match = ref.match(regex);
   if (!match) {
     const bookRef = ref.replace(/\s|\./g, "");
@@ -186,6 +226,10 @@ export function parseRef(ref: string, previousRef: Ref | undefined, isVerseSepar
   } else if (previousRef) {
     parsedRef.book = previousRef.book;
   } else {
+    console.log(`Error parsing ref: book must be defined in the reference '${
+      ref
+    }' or in the previous ref '${previousRef}'
+      `);
     return undefined;
   }
 

@@ -63,9 +63,8 @@ export async function searchVersesFromDB(queryAndMode: QueryAndMode, db: Databas
       sqlQuery += ` AND (${refQueries.join(" OR ")})`;
     } else {
       const bookList: string[] = otnt === "OT" ? OT_BOOKS : NT_BOOKS;
-      const books = bookList.join("', '");
-      console.log("otnt", otnt);
-      sqlQuery += ` AND b.short_name IN ('${books}')`;
+      const books = bookList.map((book) => book.toLowerCase()).join("', '");
+      sqlQuery += ` AND LOWER(b.short_name) IN ('${books}')`;
     }
 
     // Filter by text

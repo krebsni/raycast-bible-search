@@ -485,7 +485,6 @@ export interface Query {
   filter: string | undefined;
   refs: Ref[] | undefined;
 }
-
 export interface QueryAndMode {
   query: Query | undefined;
   otnt: string;

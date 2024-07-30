@@ -19,8 +19,8 @@ export function createMarkdown(
     let filterText = "";
     if (filter) {
       const words = v.text.split(" ");
-      const filterIndex = words.findIndex((word) => word.toLowerCase().includes(filter.toLowerCase()));
-      let startIndex = Math.max(0, filterIndex - 2);
+      const filterIndex = words.findIndex((word) => word.toLowerCase().includes(filter.trim().toLowerCase()));
+      let startIndex = Math.max(0, filterIndex - 1);
       let endIndex = Math.min(words.length - 1, filterIndex + 2);
       if (startIndex === 0) {
         endIndex = Math.min(endIndex + (2 - filterIndex), words.length - 1);
@@ -75,9 +75,23 @@ export function mapBookToRcVAbbrev(longBookName: string): string | undefined {
   return undefined;
 }
 
-export function getBookIndex(longBookName: string): number {
+export function getBookIndex(longBookName: string): string {
   const keysArray = Array.from(RCV_APP_ABBREV_MAP.keys());
-  return keysArray.indexOf(longBookName) + 1;
+  return (keysArray.indexOf(longBookName) + 1).toString().padStart(2, "0");
+}
+
+export function getUrlForVerse(verse: Verse): string {
+  return (
+    "https://text.recoveryversion.bible/" +
+    getBookIndex(verse.book_name_long) +
+    verse.book_name_long.replace(/[\s]/g, "") +
+    "_" +
+    verse.chapter +
+    ".htm" +
+    (mapBookToRcVAbbrev(verse.book_name_long)
+      ? "#" + mapBookToRcVAbbrev(verse.book_name_long) + verse.chapter + "-" + verse.verse
+      : "")
+  );
 }
 
 function parseOTNT(maybeMode: string, validMode: string[]): string | undefined {
@@ -135,7 +149,7 @@ export function parseQuery(query: string): Query | undefined {
   return { filter: filter, refs };
 }
 
-function containsBibleBook(ref: string): boolean {
+function matchesBibleBook(ref: string): boolean {
   const allBooks = [...OT_BOOKS, ...NT_BOOKS, ...BOOKS_ABBREV, ...ABBREV_MAP.keys()];
   return allBooks.some((book) => book.toLowerCase() === ref.toLowerCase());
 }
@@ -168,7 +182,7 @@ export function parseRef(ref: string, previousRef: Ref | undefined, isVerseSepar
   const match = ref.match(regex);
   if (!match) {
     const bookRef = ref.replace(/\s|\./g, "");
-    if (containsBibleBook(bookRef)) {
+    if (matchesBibleBook(bookRef)) {
       return { book: bookRef, chapterFrom: undefined, verseFrom: undefined, chapterTo: undefined, verseTo: undefined };
     }
     console.error(`Error parsing ref: invalid format for reference '${ref}'`);
@@ -224,13 +238,10 @@ export function parseRef(ref: string, previousRef: Ref | undefined, isVerseSepar
   if (match[1]) {
     // book, e.g. John
     const book = match[1].replace(/\s|\./g, "");
-    const isOT = OT_BOOKS.includes(book);
-    const isNT = NT_BOOKS.includes(book);
-    const isAbbrev = BOOKS_ABBREV.includes(book);
-    const mappedAbbrev = ABBREV_MAP.get(book);
-    if (!isOT && !isNT && !isAbbrev && !mappedAbbrev) {
+    if (!matchesBibleBook(book)) {
       return undefined;
     } else {
+      const mappedAbbrev = ABBREV_MAP.get(book);
       if (mappedAbbrev) {
         parsedRef.book = mappedAbbrev;
       } else {

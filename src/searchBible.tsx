@@ -17,7 +17,14 @@ import path, { resolve } from "path";
 import { homedir } from "os";
 import { MODE, Verse } from "./types";
 import { searchVersesFromDB } from "./db";
-import { cleanseQuery, createClipboardText, createMarkdown, mapBookToRcVAbbrev, parseQuery } from "./util";
+import {
+  cleanseQuery,
+  createClipboardText,
+  createMarkdown,
+  getUrlForVerse,
+  mapBookToRcVAbbrev,
+  parseQuery,
+} from "./util";
 
 const BASE_PATH = resolve(homedir(), "Documents/dev-tools/search-bible");
 const DB_FOLDER = path.join(BASE_PATH, "assets/Bible.SQLite3");
@@ -157,18 +164,7 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
                 />
                 <Action.OpenInBrowser
                   title="Open Recovery Version"
-                  url={
-                    "https://text.recoveryversion.bible/" +
-                    item.verse.book_name_long.replace(/[\s]/g, "") +
-                    ".htm" +
-                    (mapBookToRcVAbbrev(item.verse.book_name_long)
-                      ? "#" +
-                        mapBookToRcVAbbrev(item.verse.book_name_long) +
-                        item.verse.chapter +
-                        "-" +
-                        item.verse.verse
-                      : "")
-                  }
+                  url={getUrlForVerse(item.verse)}
                   shortcut={{ modifiers: ["cmd"], key: "o" }}
                 />
               </ActionPanel>

@@ -67,12 +67,17 @@ export function cleanseQuery(query: string): { ref: string; mode: string | undef
   return { ref: refWithoutMode, mode: mode };
 }
 
-export function mapBookToRcVAbbrev(book: string): string | undefined {
-  const mappedAbbrev = RCV_APP_ABBREV_MAP.get(book);
+export function mapBookToRcVAbbrev(longBookName: string): string | undefined {
+  const mappedAbbrev = RCV_APP_ABBREV_MAP.get(longBookName);
   if (mappedAbbrev) {
     return mappedAbbrev;
   }
   return undefined;
+}
+
+export function getBookIndex(longBookName: string): number {
+  const keysArray = Array.from(RCV_APP_ABBREV_MAP.keys());
+  return keysArray.indexOf(longBookName) + 1;
 }
 
 function parseOTNT(maybeMode: string, validMode: string[]): string | undefined {

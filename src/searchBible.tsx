@@ -161,8 +161,12 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
                     "https://text.recoveryversion.bible/" +
                     item.verse.book_name_long.replace(/[\s]/g, "") +
                     ".htm" +
-                    (mapBookToRcVAbbrev(item.verse.book_name)
-                      ? "#" + mapBookToRcVAbbrev(item.verse.book_name) + item.verse.chapter + "-" + item.verse.verse
+                    (mapBookToRcVAbbrev(item.verse.book_name_long)
+                      ? "#" +
+                        mapBookToRcVAbbrev(item.verse.book_name_long) +
+                        item.verse.chapter +
+                        "-" +
+                        item.verse.verse
                       : "")
                   }
                   shortcut={{ modifiers: ["cmd"], key: "o" }}

@@ -1,9 +1,10 @@
-import { NT_BOOKS, Ref } from "./types";
+import { NT_BOOKS, RCV_APP_ABBREV_MAP, Ref } from "./types";
 import { Verse, MODE, Query, OT_BOOKS, BOOKS_ABBREV, ABBREV_MAP } from "./types";
 
 interface listItem {
   title: string;
   detail: string;
+  verse: Verse;
 }
 
 export function createMarkdown(
@@ -33,7 +34,7 @@ export function createMarkdown(
 
     const title = `${v.book_name}. ${v.chapter}:${v.verse} ${filterText}`;
     const detail = `${v.book_name}. ${v.chapter}:${v.verse} ${v.text}`;
-    return { title, detail };
+    return { title, detail, verse: v };
   });
 }
 
@@ -64,6 +65,14 @@ export function cleanseQuery(query: string): { ref: string; mode: string | undef
   const mode = lastWord ? parseOTNT(lastWord, MODE) : undefined;
   const refWithoutMode = lastWord && mode ? trimmedReference.slice(0, -lastWord.length).trim() : trimmedReference;
   return { ref: refWithoutMode, mode: mode };
+}
+
+export function mapBookToRcVAbbrev(book: string): string | undefined {
+  const mappedAbbrev = RCV_APP_ABBREV_MAP.get(book);
+  if (mappedAbbrev) {
+    return mappedAbbrev;
+  }
+  return undefined;
 }
 
 function parseOTNT(maybeMode: string, validMode: string[]): string | undefined {

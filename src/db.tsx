@@ -9,7 +9,7 @@ export async function searchVersesFromDB(queryAndMode: QueryAndMode, db: Databas
     const book = otnt === "OT" ? "Genesis" : "Matthew";
 
     sqlQuery = `
-    SELECT v.book_number, v.chapter, v.verse, v.text, b.short_name as book_name
+    SELECT v.book_number, v.chapter, v.verse, v.text, b.short_name as book_name, b.long_name as book_name_long
     FROM verses v
     JOIN books b ON v.book_number = b.book_number
     WHERE b.long_name IN ('${book}')
@@ -18,10 +18,9 @@ export async function searchVersesFromDB(queryAndMode: QueryAndMode, db: Databas
     const { filter, refs } = query;
 
     sqlQuery = `
-    SELECT v.book_number, v.chapter, v.verse, v.text, b.short_name, b.long_name as book_name
+    SELECT v.book_number, v.chapter, v.verse, v.text, b.short_name as book_name, b.long_name as book_name_long
     FROM verses v
     JOIN books b ON v.book_number = b.book_number WHERE 1=1`;
-    console.log("refs", refs);
 
     // Filter by verse references
     if (refs && refs.length > 0) {

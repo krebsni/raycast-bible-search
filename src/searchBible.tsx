@@ -39,6 +39,7 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
     async function setSelectedTextAsQuery() {
       try {
         const query = await getSelectedText();
+        console.log("query", query);
         if (query) {
           const { ref, mode } = cleanseQuery(query);
           setQuery((old) => ({ ...old, search: ref, otnt: mode || old.otnt }));
@@ -48,7 +49,11 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
       }
     }
 
-    setSelectedTextAsQuery();
+    const isArgsEmpty =
+      Object.keys(props.arguments).length === 0 || (props.arguments.search === "" && props.arguments.otnt === "");
+    if (isArgsEmpty) {
+      setSelectedTextAsQuery();
+    }
   }, []);
 
   const performSearch = useCallback(async () => {
@@ -112,7 +117,7 @@ export default function Command(props: LaunchProps<{ arguments: Arguments.Search
       searchBarAccessory={
         <List.Dropdown
           tooltip="Select Bible Version"
-          onChange={(version) => setQuery((old) => ({ ...old, version }))}
+          onChange={(otnt) => setQuery((old) => ({ ...old, otnt }))}
           value={otnt || ""}
           defaultValue={"OT+NT"}
         >

@@ -64,7 +64,8 @@ export async function searchVersesFromDB(queryAndMode: QueryAndMode, db: Databas
     } else {
       const bookList: string[] = otnt === "OT" ? OT_BOOKS : NT_BOOKS;
       const books = bookList.join("', '");
-      sqlQuery += ` AND b.long_name IN ('${books}')`;
+      console.log("otnt", otnt);
+      sqlQuery += ` AND b.short_name IN ('${books}')`;
     }
 
     // Filter by text
